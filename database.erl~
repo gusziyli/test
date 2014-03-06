@@ -1,0 +1,65 @@
+-module(database).
+-export([init/0,insert_hypebeast/2,select_hypebeast/1,delete_row/2,select_all/1,insert_highsnobiety/2,select_highsnobiety/1,clear_all/0]).
+
+-record(hypebeast,{title, time}).
+-record(highsnobiety,{title,time}).
+-include_lib("stdlib/include/qlc.hrl").
+
+
+%creates databases.
+init()->
+    mnesia:create_schema([node()]),
+    mnesia:start(),
+    mnesia:create_table(hypebeast,[]),
+    mnesia:create_table(highsnobiety,[]).
+ %   mnesia:clear_table(hypebeast),
+ %   mnesia:clear_table(highsnobiety).
+
+
+insert_hypebeast(Title,Time) ->
+    Fun = fun() ->
+		  mnesia:write(#hypebeast{title=Title,time=Time})
+	  end,
+    mnesia:transaction(Fun).
+
+insert_highsnobiety(Title,Time) ->
+    Fun = fun() ->
+		  mnesia:write(#highsnobiety{title=Title,time=Time})
+	  end,
+    mnesia:transaction(Fun).
+
+select_hypebeast(Title) ->
+    Fun = fun() ->
+		  mnesia:read(hypebeast,Title)
+	  end,
+    {atomic, [Row]}=mnesia:transaction(Fun),
+    io:format("Hypebeast Headline:~p~n",[Row#hypebeast.title]),
+    io:format("Discovery Time:~p~n",[Row#hypebeast.time]).
+
+select_highsnobiety(Title) ->
+    Fun = fun() ->
+		  mnesia:read(highsnobiety,Title)
+	  end,
+    {atomic, [Row]}=mnesia:transaction(Fun),
+    io:format("Highsnobiety Headline:~p~n",[Row#highsnobiety.title]),
+    io:format("Publish Time:~p~n",[Row#highsnobiety.time]).
+
+select_all(Table) -> 
+    Fun = fun()->
+		  mnesia:all_keys(Table)
+	  end,
+    {atomic,List} =  mnesia:transaction(Fun),
+    List.
+%   io:format("~p~n",[List]).
+    
+    
+delete_row(Table, Key)->
+    Fun = fun()->
+		  mnesia:delete({Table, Key})
+	  end,
+    mnesia:transaction(Fun).
+
+
+clear_all() ->
+     mnesia:clear_table(hypebeast),
+     mnesia:clear_table(highsnobiety).
